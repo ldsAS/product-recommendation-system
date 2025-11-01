@@ -3,8 +3,11 @@
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-009688)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ldsAS/product-recommendation-system/blob/main/notebooks/colab_demo.ipynb)
 
 基於機器學習的智能產品推薦系統，為銷售團隊提供精準的個人化產品推薦，提升銷售轉換率。
+
+> **🚀 快速體驗**: 點擊上方 Colab 徽章，在瀏覽器中立即試用系統！
 
 ## 📋 專案概述
 
