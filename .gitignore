@@ -89,3 +89,6 @@ test_output.txt
 # 其他
 *.bak
 *.orig
+
+# 健康檢查報告（臨時檔案）
+PROJECT_HEALTH_CHECK.md
