@@ -81,11 +81,21 @@ def generate_demo_data(
     
     salesdetails = pd.DataFrame(salesdetails)
     
-    # 5. 儲存資料
+    # 5. 儲存資料（JSON Lines 格式）
     print(f"\n💾 儲存資料到 {output_dir}/...")
-    members.to_csv(output_path / 'member', index=False)
-    sales.to_csv(output_path / 'sales', index=False)
-    salesdetails.to_csv(output_path / 'salesdetails', index=False)
+    
+    # 儲存為 JSON Lines 格式（系統預期的格式）
+    with open(output_path / 'member', 'w', encoding='utf-8') as f:
+        for _, row in members.iterrows():
+            f.write(row.to_json(force_ascii=False) + '\n')
+    
+    with open(output_path / 'sales', 'w', encoding='utf-8') as f:
+        for _, row in sales.iterrows():
+            f.write(row.to_json(force_ascii=False) + '\n')
+    
+    with open(output_path / 'salesdetails', 'w', encoding='utf-8') as f:
+        for _, row in salesdetails.iterrows():
+            f.write(row.to_json(force_ascii=False) + '\n')
     
     # 6. 顯示統計資訊
     print("\n" + "=" * 60)
