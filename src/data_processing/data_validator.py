@@ -65,20 +65,28 @@ class DataValidator:
         # 檢查缺失值比例
         missing_stats = {}
         for column in df.columns:
-            missing_count = df[column].isna().sum()
-            missing_pct = (missing_count / len(df)) * 100
-            
-            if missing_pct > 0:
-                missing_stats[column] = {
-                    'count': int(missing_count),
-                    'percentage': float(missing_pct)
-                }
+            try:
+                missing_count = df[column].isna().sum()
+                # 確保 missing_count 是標量值
+                if hasattr(missing_count, 'item'):
+                    missing_count = missing_count.item()
+                missing_count = int(missing_count)
                 
-                if missing_pct > 50:
-                    self.validation_report['warnings'].append(
-                        f"{column} 有 {missing_pct:.1f}% 的缺失值"
-                    )
-                    logger.warning(f"{column} 有 {missing_pct:.1f}% 的缺失值")
+                missing_pct = (missing_count / len(df)) * 100
+                
+                if missing_pct > 0:
+                    missing_stats[column] = {
+                        'count': missing_count,
+                        'percentage': float(missing_pct)
+                    }
+                    
+                    if missing_pct > 50:
+                        self.validation_report['warnings'].append(
+                            f"{column} 有 {missing_pct:.1f}% 的缺失值"
+                        )
+                        logger.warning(f"{column} 有 {missing_pct:.1f}% 的缺失值")
+            except Exception as e:
+                logger.warning(f"無法檢查欄位 {column} 的缺失值: {e}")
         
         self.validation_report['statistics']['missing_values'] = missing_stats
         
