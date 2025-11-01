@@ -503,9 +503,12 @@ cat data/DATA_ANALYSIS_REPORT.md
 
 ## 📞 聯絡資訊
 
-如有任何問題、建議或合作機會，歡迎透過 GitHub Issues 聯絡：
+如有任何問題、建議或合作機會，歡迎聯絡：
 
-- **GitHub Issues**: [提交 Issue](https://github.com/ldsAS/product-recommendation-system/issues)
+- **回報問題**: [GitHub Issues](https://github.com/ldsAS/product-recommendation-system/issues) - 回報 bug 或提出功能需求
+- **討論交流**: [GitHub Discussions](https://github.com/ldsAS/product-recommendation-system/discussions) - 一般討論、問答和想法分享
+
+> **注意**: 如果 Discussions 連結無法開啟，請前往倉庫的 Settings → General → Features，勾選 "Discussions" 以啟用此功能。
 
 ## 🙏 致謝
 
