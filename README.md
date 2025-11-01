@@ -1,79 +1,112 @@
-# 顧客產品推薦系統
+# 🛍️ 顧客產品推薦系統
 
-基於機器學習的智能產品推薦系統，為銷售員提供 Top 5 產品推薦。
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-009688)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## 專案概述
+基於機器學習的智能產品推薦系統，為銷售團隊提供精準的個人化產品推薦，提升銷售轉換率。
 
-本系統分析會員資料、銷售訂單和產品明細，訓練推薦模型，並提供 API 介面讓銷售員輸入顧客資訊後快速獲得個人化的產品推薦。
+## 📋 專案概述
 
-### 主要功能
+本系統整合會員資料、歷史銷售訂單和產品資訊，運用機器學習演算法訓練推薦模型，透過 RESTful API 提供即時的個人化產品推薦服務。銷售人員只需輸入顧客基本資訊，即可在 3 秒內獲得 Top 5 推薦產品及推薦理由。
 
-- 🎯 **智能推薦**: 基於機器學習模型預測顧客購買偏好
-- ⚡ **快速回應**: 3 秒內返回 Top 5 推薦結果
-- 📊 **可解釋性**: 為每個推薦提供清晰的理由說明
-- 🔄 **持續優化**: 支援模型版本管理和 A/B 測試
-- 📈 **效能監控**: 追蹤推薦準確率和轉換率
+### ✨ 核心特色
 
-## 快速開始
+- 🎯 **智能推薦引擎**: 結合協同過濾與機器學習模型，精準預測顧客購買偏好
+- ⚡ **高效能回應**: 保證 3 秒內返回推薦結果，支援高併發請求
+- 📊 **可解釋性**: 每個推薦都附帶清晰的理由說明，增強銷售說服力
+- 🔄 **模型管理**: 支援多版本模型管理、A/B 測試和自動化評估
+- 📈 **效能監控**: 即時追蹤推薦準確率、點擊率和轉換率等關鍵指標
+- 🔒 **資料驗證**: 完整的輸入驗證和錯誤處理機制
 
-### 前置需求
+## 🚀 快速開始
+
+### 系統需求
 
 - Python 3.9 或更高版本
-- pip 套件管理器
+- 4GB+ RAM（建議 8GB）
+- pip 或 conda 套件管理器
 
 ### 安裝步驟
 
-1. **克隆專案** (如果使用 Git):
+#### 1. 克隆專案
+
 ```bash
-git clone <repository-url>
-cd customer-product-recommendation
+git clone https://github.com/ldsAS/product-recommendation-system.git
+cd product-recommendation-system
 ```
 
-2. **建立虛擬環境** (建議):
+#### 2. 建立虛擬環境（強烈建議）
+
 ```bash
+# 使用 venv
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或
-venv\Scripts\activate  # Windows
+
+# 啟動虛擬環境
+# Linux/Mac:
+source venv/bin/activate
+# Windows:
+venv\Scripts\activate
 ```
 
-3. **安裝依賴套件**:
+#### 3. 安裝依賴套件
+
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **配置環境變數**:
+#### 4. 配置環境變數
+
 ```bash
+# 複製環境變數範本
 cp .env.example .env
-# 編輯 .env 檔案，填入實際配置
+
+# 編輯 .env 檔案，根據需求調整配置
+# 主要配置項：
+# - MODEL_VERSION: 模型版本
+# - LOG_LEVEL: 日誌級別
+# - ENABLE_CACHE: 是否啟用快取
 ```
 
-5. **準備資料**:
-將資料檔案放在 `data/raw/` 目錄：
-- member
-- sales
-- salesdetails
+#### 5. 準備訓練資料
 
-### 訓練模型
+將以下資料檔案放入 `data/raw/` 目錄：
+- `member` - 會員資料
+- `sales` - 銷售訂單
+- `salesdetails` - 訂單明細
+
+> **注意**: 資料檔案不包含在 Git 倉庫中，請確保您有權限存取這些資料。
+
+### 使用指南
+
+#### 訓練推薦模型
 
 ```bash
+# 執行完整訓練流程（資料處理 + 模型訓練 + 評估）
 python src/train.py
+
+# 訓練完成後，模型會儲存在 data/models/ 目錄
 ```
 
-### 啟動 API 服務
+#### 啟動 API 服務
 
 ```bash
+# 方式 1: 直接執行
 python src/api/main.py
-```
 
-或使用 uvicorn：
-```bash
+# 方式 2: 使用 uvicorn（推薦用於生產環境）
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+
+# 開發模式（自動重載）
 uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 測試推薦
+服務啟動後，訪問 http://localhost:8000/docs 查看 API 文件。
 
-使用 curl 測試 API：
+#### 測試推薦功能
+
+**方式 1: 使用 curl**
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/recommendations \
   -H "Content-Type: application/json" \
@@ -86,9 +119,16 @@ curl -X POST http://localhost:8000/api/v1/recommendations \
   }'
 ```
 
-或使用命令列工具：
+**方式 2: 使用命令列工具（互動式）**
+
 ```bash
 python src/cli/recommend_cli.py
+```
+
+**方式 3: 使用測試腳本**
+
+```bash
+python scripts/test_api.py
 ```
 
 ## 專案結構
@@ -141,20 +181,51 @@ python src/cli/recommend_cli.py
 └── README.md                      # 本檔案
 ```
 
-## API 文件
+## 📚 API 文件
 
-啟動服務後，訪問以下 URL 查看自動生成的 API 文件：
+啟動服務後，可透過以下 URL 查看完整的互動式 API 文件：
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8000/docs （推薦，可直接測試）
+- **ReDoc**: http://localhost:8000/redoc （更適合閱讀）
 
-### 主要端點
+### 主要 API 端點
 
-- `POST /api/v1/recommendations` - 獲取產品推薦
-- `GET /api/v1/model/info` - 查看模型資訊
-- `GET /api/v1/health` - 健康檢查
+| 方法 | 端點 | 說明 | 回應時間 |
+|------|------|------|----------|
+| `POST` | `/api/v1/recommendations` | 獲取個人化產品推薦 | < 3s |
+| `GET` | `/api/v1/model/info` | 查看當前模型資訊和版本 | < 100ms |
+| `GET` | `/api/v1/health` | 健康檢查端點 | < 50ms |
 
-## 開發指南
+### 請求範例
+
+```json
+{
+  "member_code": "CU000001",
+  "phone": "0937024682",
+  "total_consumption": 17400,
+  "accumulated_bonus": 500,
+  "recent_purchases": ["30463", "31033"]
+}
+```
+
+### 回應範例
+
+```json
+{
+  "recommendations": [
+    {
+      "product_id": "30463",
+      "product_name": "產品名稱",
+      "score": 0.85,
+      "reason": "基於您的購買歷史和偏好"
+    }
+  ],
+  "model_version": "v1.0.0",
+  "response_time_ms": 1250
+}
+```
+
+## 🔧 開發指南
 
 ### 執行測試
 
@@ -163,30 +234,55 @@ python src/cli/recommend_cli.py
 pytest
 
 # 執行特定測試檔案
-pytest tests/test_data_loader.py
+pytest tests/test_data_loader.py -v
 
 # 查看測試覆蓋率
-pytest --cov=src tests/
+pytest --cov=src --cov-report=html tests/
+
+# 執行整合測試
+pytest tests/test_integration.py
+
+# 執行效能測試
+pytest tests/test_performance.py
 ```
 
-### 程式碼格式化
+### 程式碼品質
 
 ```bash
-# 格式化程式碼
+# 格式化程式碼（使用 black）
 black src/ tests/
 
-# 檢查程式碼風格
-flake8 src/ tests/
+# 檢查程式碼風格（使用 flake8）
+flake8 src/ tests/ --max-line-length=100
 
-# 類型檢查
-mypy src/
+# 類型檢查（使用 mypy）
+mypy src/ --ignore-missing-imports
+
+# 排序 import（使用 isort）
+isort src/ tests/
 ```
 
-### 資料探索
+### 資料探索與分析
 
-使用 Jupyter Notebook 進行資料探索：
 ```bash
+# 啟動 Jupyter Notebook
 jupyter notebook
+
+# 執行資料分析腳本
+python scripts/analyze_data.py
+
+# 驗證資料品質
+python scripts/verify_models.py
+```
+
+### 除錯與日誌
+
+日誌檔案位於 `logs/` 目錄，可透過環境變數 `LOG_LEVEL` 調整日誌級別：
+
+```bash
+# 設定為 DEBUG 模式以獲得詳細日誌
+export LOG_LEVEL=DEBUG
+python src/api/main.py
 ```
 
 ## 配置說明
@@ -202,65 +298,245 @@ jupyter notebook
 - `ENABLE_CACHE`: 是否啟用快取
 - `LOG_LEVEL`: 日誌級別 (DEBUG, INFO, WARNING, ERROR)
 
-## 效能指標
+## 📊 效能指標
 
-- ✅ API 回應時間: < 3 秒
-- ✅ 模型準確率: ≥ 70%
-- ✅ Precision@5: ≥ 0.70
-- ✅ 推薦品質: 可解釋且相關
+系統設計目標與實際表現：
 
-## 技術棧
+| 指標 | 目標值 | 說明 |
+|------|--------|------|
+| API 回應時間 | < 3 秒 | 從請求到返回推薦結果的時間 |
+| 模型準確率 | ≥ 70% | 推薦產品的整體準確率 |
+| Precision@5 | ≥ 0.70 | Top 5 推薦的精確度 |
+| 系統可用性 | ≥ 99% | 服務正常運行時間比例 |
+| 併發處理 | 100+ req/s | 支援的同時請求數量 |
 
-- **程式語言**: Python 3.9+
-- **Web 框架**: FastAPI
-- **機器學習**: LightGBM, XGBoost, scikit-learn
-- **資料處理**: pandas, numpy
-- **快取**: Redis (可選)
-- **測試**: pytest
-- **部署**: Docker (可選)
+## 🛠️ 技術架構
 
-## 疑難排解
+### 核心技術棧
 
-### 常見問題
+| 類別 | 技術 | 用途 |
+|------|------|------|
+| **程式語言** | Python 3.9+ | 主要開發語言 |
+| **Web 框架** | FastAPI | RESTful API 服務 |
+| **機器學習** | LightGBM, XGBoost | 推薦模型訓練 |
+| **協同過濾** | scikit-learn | 基於相似度的推薦 |
+| **資料處理** | pandas, numpy | 資料清洗與特徵工程 |
+| **API 文件** | Swagger/OpenAPI | 自動生成 API 文件 |
+| **測試框架** | pytest | 單元測試與整合測試 |
+| **日誌管理** | Python logging | 結構化日誌記錄 |
+| **快取** | Redis (可選) | 提升回應速度 |
+| **容器化** | Docker (可選) | 簡化部署流程 |
 
-1. **模型檔案找不到**
-   - 確保已執行 `python src/train.py` 訓練模型
-   - 檢查 `data/models/` 目錄是否存在模型檔案
+### 系統架構
 
-2. **API 回應時間過長**
-   - 啟用快取: 設定 `ENABLE_CACHE=true`
-   - 檢查模型大小和複雜度
-   - 考慮使用更快的模型或特徵預計算
+```
+┌─────────────┐
+│   銷售員    │
+└──────┬──────┘
+       │ HTTP Request
+       ▼
+┌─────────────────────────────┐
+│      FastAPI Server         │
+│  ┌─────────────────────┐   │
+│  │  Recommendation API │   │
+│  └──────────┬──────────┘   │
+│             │               │
+│  ┌──────────▼──────────┐   │
+│  │ Recommendation      │   │
+│  │ Engine              │   │
+│  │ ┌─────────────────┐ │   │
+│  │ │ ML Model        │ │   │
+│  │ │ (LightGBM/XGB)  │ │   │
+│  │ └─────────────────┘ │   │
+│  │ ┌─────────────────┐ │   │
+│  │ │ Collaborative   │ │   │
+│  │ │ Filtering       │ │   │
+│  │ └─────────────────┘ │   │
+│  └─────────────────────┘   │
+└─────────────────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  Model Files    │
+│  (data/models/) │
+└─────────────────┘
+```
 
-3. **記憶體不足**
-   - 使用分批處理載入大型資料檔案
-   - 減少特徵數量或使用特徵選擇
-   - 增加系統記憶體
+## ❓ 疑難排解
 
-## 貢獻指南
+### 常見問題與解決方案
 
-歡迎貢獻！請遵循以下步驟：
+#### 1. 模型檔案找不到
 
-1. Fork 專案
-2. 建立功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交變更 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 開啟 Pull Request
+**錯誤訊息**: `FileNotFoundError: Model file not found`
 
-## 授權
+**解決方法**:
+```bash
+# 確認是否已訓練模型
+python src/train.py
 
-[請在此處添加授權資訊]
+# 檢查模型檔案是否存在
+ls -la data/models/
 
-## 聯絡資訊
+# 驗證模型完整性
+python scripts/verify_models.py
+```
 
-如有問題或建議，請聯絡：
-- 專案負責人: [姓名]
-- Email: [email]
+#### 2. API 回應時間過長
 
-## 致謝
+**症狀**: 推薦請求超過 3 秒
 
-感謝所有貢獻者和支持者！
+**解決方法**:
+- 啟用快取: 在 `.env` 中設定 `ENABLE_CACHE=true`
+- 檢查模型大小: 考慮使用更輕量的模型
+- 特徵預計算: 將常用特徵預先計算並快取
+- 增加硬體資源: 升級 CPU 或增加記憶體
+
+#### 3. 記憶體不足
+
+**錯誤訊息**: `MemoryError` 或系統變慢
+
+**解決方法**:
+```python
+# 在 src/config.py 中調整批次大小
+BATCH_SIZE = 1000  # 減少批次大小
+
+# 使用資料分塊載入
+# 在 data_loader.py 中使用 chunksize 參數
+df = pd.read_csv('data.csv', chunksize=10000)
+```
+
+#### 4. 資料格式錯誤
+
+**錯誤訊息**: `ValidationError` 或資料驗證失敗
+
+**解決方法**:
+```bash
+# 檢查資料格式
+python scripts/demo_validators.py
+
+# 查看資料分析報告
+cat data/DATA_ANALYSIS_REPORT.md
+```
+
+#### 5. 模型準確率低
+
+**症狀**: Precision@5 < 0.70
+
+**解決方法**:
+- 檢查訓練資料品質和數量
+- 調整模型超參數
+- 增加特徵工程
+- 使用 A/B 測試比較不同模型
+
+### 取得協助
+
+如果問題仍未解決，請：
+1. 查看 `logs/` 目錄中的詳細日誌
+2. 檢查 [Issues](https://github.com/ldsAS/product-recommendation-system/issues) 是否有類似問題
+3. 提交新的 Issue 並附上錯誤訊息和日誌
+
+## 🤝 貢獻指南
+
+我們歡迎各種形式的貢獻！無論是回報 bug、提出新功能建議，或是提交程式碼改進。
+
+### 貢獻流程
+
+1. **Fork 專案**
+   ```bash
+   # 點擊 GitHub 頁面右上角的 Fork 按鈕
+   ```
+
+2. **克隆您的 Fork**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/product-recommendation-system.git
+   cd product-recommendation-system
+   ```
+
+3. **建立功能分支**
+   ```bash
+   git checkout -b feature/amazing-feature
+   # 或
+   git checkout -b fix/bug-description
+   ```
+
+4. **進行開發**
+   - 撰寫程式碼
+   - 新增測試
+   - 更新文件
+
+5. **執行測試**
+   ```bash
+   pytest
+   black src/ tests/
+   flake8 src/ tests/
+   ```
+
+6. **提交變更**
+   ```bash
+   git add .
+   git commit -m "feat: add amazing feature"
+   # 使用語義化提交訊息：feat, fix, docs, style, refactor, test, chore
+   ```
+
+7. **推送到您的 Fork**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+8. **開啟 Pull Request**
+   - 前往原始專案頁面
+   - 點擊 "New Pull Request"
+   - 填寫 PR 描述，說明變更內容
+
+### 程式碼規範
+
+- 遵循 PEP 8 風格指南
+- 使用 Black 格式化程式碼
+- 為新功能撰寫測試
+- 更新相關文件
+- 提交訊息使用語義化格式
+
+## 📄 授權
+
+本專案採用 MIT 授權條款 - 詳見 [LICENSE](LICENSE) 檔案
+
+## 📞 聯絡資訊
+
+如有任何問題、建議或合作機會，歡迎聯絡：
+
+- **GitHub Issues**: [提交 Issue](https://github.com/ldsAS/product-recommendation-system/issues)
+- **GitHub Discussions**: [參與討論](https://github.com/ldsAS/product-recommendation-system/discussions)
+- **Email**: [您的聯絡信箱]
+
+## 🙏 致謝
+
+感謝所有為本專案做出貢獻的開發者和使用者！
+
+特別感謝：
+- FastAPI 團隊提供優秀的 Web 框架
+- scikit-learn 和 LightGBM 社群
+- 所有開源貢獻者
+
+## 📚 相關文件
+
+- [安裝指南](INSTALL.md) - 詳細的安裝說明
+- [模型訓練文件](docs/MODEL_TRAINING.md) - 模型訓練與調優
+- [部署指南](docs/DEPLOYMENT.md) - 生產環境部署
+- [專案總結](docs/PROJECT_SUMMARY.md) - 專案架構與設計決策
+
+## 🗺️ 開發路線圖
+
+- [ ] 支援更多推薦演算法（深度學習模型）
+- [ ] 實作即時模型更新機制
+- [ ] 增加 Web UI 介面
+- [ ] 支援多語言推薦理由
+- [ ] 整合更多資料來源
+- [ ] 提供 Docker Compose 一鍵部署
+- [ ] 建立效能監控儀表板
 
 ---
+
+**⭐ 如果這個專案對您有幫助，請給我們一個 Star！**
 
 **祝使用愉快！** 🚀
