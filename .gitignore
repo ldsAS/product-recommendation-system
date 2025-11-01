@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# 資料檔案（敏感資料不上傳）
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*.parquet
+data/processed/*.csv
+
+# 模型檔案（太大不上傳）
+data/models/*.pkl
+data/models/*.joblib
+data/models/*.h5
+data/models/*.pt
+
+# 保留目錄結構但不上傳內容
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+
+# 日誌檔案
+logs/*.log
+logs/**/*.log
+*.log
+
+# 環境變數
+.env
+.env.local
+.env.*.local
+
+# 臨時檔案
+*.tmp
+*.temp
+.cache/
+
+# 作業系統
+Thumbs.db
+.DS_Store
+
+# Kiro 相關（可選）
+.kiro/settings/mcp.json
+
+# 測試輸出
+test_output.txt
+*.pyc
+
+# 其他
+*.bak
+*.orig

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品推薦系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .result-rank {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .result-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .result-score {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .result-explanation {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        
+        .result-meta {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f5c6cb;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 產品推薦系統</h1>
+            <p>輸入會員資訊，獲取個性化產品推薦</p>
+        </div>
+        
+        <div class="card">
+            <form id="recommendForm">
+                <div class="form-group">
+                    <label for="member_code">會員編號 *</label>
+                    <input type="text" id="member_code" name="member_code" required placeholder="例如: CU000001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">電話號碼</label>
+                    <input type="text" id="phone" name="phone" placeholder="例如: 0937024682">
+                    <small>選填</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="total_consumption">總消費金額 *</label>
+                    <input type="number" id="total_consumption" name="total_consumption" required min="0" step="0.01" placeholder="例如: 17400">
+                </div>
+                
+                <div class="form-group">
+                    <label for="accumulated_bonus">累積紅利 *</label>
+                    <input type="number" id="accumulated_bonus" name="accumulated_bonus" required min="0" step="0.01" placeholder="例如: 500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="recent_purchases">最近購買的產品 ID</label>
+                    <input type="text" id="recent_purchases" name="recent_purchases" placeholder="例如: 30463, 31033">
+                    <small>多個產品 ID 用逗號分隔，選填</small>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">獲取推薦</button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在生成推薦...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+        </div>
+        
+        <div class="results" id="results"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('recommendForm');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 隱藏之前的結果和錯誤
+            results.classList.remove('show');
+            error.classList.remove('show');
+            
+            // 顯示載入中
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+            
+            // 收集表單資料
+            const formData = {
+                member_code: document.getElementById('member_code').value,
+                phone: document.getElementById('phone').value || null,
+                total_consumption: parseFloat(document.getElementById('total_consumption').value),
+                accumulated_bonus: parseFloat(document.getElementById('accumulated_bonus').value),
+                recent_purchases: document.getElementById('recent_purchases').value
+                    ? document.getElementById('recent_purchases').value.split(',').map(s => s.trim()).filter(s => s)
+                    : [],
+                top_k: 5
+            };
+            
+            try {
+                // 發送請求
+                const response = await fetch('/api/v1/recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || '推薦生成失敗');
+                }
+                
+                // 顯示結果
+                displayResults(data);
+                
+            } catch (err) {
+                // 顯示錯誤
+                error.textContent = '錯誤: ' + err.message;
+                error.classList.add('show');
+            } finally {
+                // 隱藏載入中
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function displayResults(data) {
+            const recommendations = data.recommendations;
+            
+            if (!recommendations || recommendations.length === 0) {
+                results.innerHTML = '<div class="card"><p>沒有找到推薦產品</p></div>';
+                results.classList.add('show');
+                return;
+            }
+            
+            let html = '<div class="card">';
+            html += `<h2 style="margin-bottom: 20px;">為會員 ${data.member_code} 的推薦結果</h2>`;
+            html += `<p style="color: #666; margin-bottom: 20px;">回應時間: ${data.response_time_ms.toFixed(2)} ms | 模型版本: ${data.model_version}</p>`;
+            
+            recommendations.forEach(rec => {
+                html += `
+                    <div class="result-item">
+                        <span class="result-rank">推薦 ${rec.rank}</span>
+                        <div class="result-title">${rec.product_name}</div>
+                        <span class="result-score">信心分數: ${rec.confidence_score.toFixed(1)}%</span>
+                        <div class="result-explanation">💡 ${rec.explanation}</div>
+                        <div class="result-meta">產品 ID: ${rec.product_id} | 來源: ${rec.source}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            results.innerHTML = html;
+            results.classList.add('show');
+            
+            // 滾動到結果
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
