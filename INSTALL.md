@@ -108,8 +108,8 @@ pip install scikit-learn>=1.3.0 lightgbm>=4.0.0
 # XGBoost (可選，如果 LightGBM 不夠用)
 pip install xgboost>=2.0.0
 
-# 協同過濾 (可選)
-pip install scikit-surprise>=1.1.3
+# 協同過濾 (使用 Implicit 庫，比 scikit-surprise 更快且無需編譯器)
+pip install implicit>=0.7.0
 
 # Redis (可選，用於快取)
 pip install redis>=5.0.0

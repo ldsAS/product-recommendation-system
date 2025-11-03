@@ -1,0 +1,53 @@
+{
+  "version": "v1.0.0",
+  "model_type": "lightgbm",
+  "trained_at": "2025-11-03T14:53:52.086937",
+  "training_samples": 384,
+  "validation_samples": 83,
+  "test_samples": 83,
+  "metrics": {
+    "accuracy": 0.7951807228915663,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "auc": 0.7566844919786097,
+    "log_loss": 0.4361324675061398
+  },
+  "feature_names": [
+    "total_consumption",
+    "accumulated_bonus",
+    "member_age_days",
+    "recency",
+    "frequency",
+    "monetary",
+    "favorite_products",
+    "product_diversity",
+    "avg_items_per_order",
+    "purchase_hour_preference",
+    "purchase_day_preference",
+    "days_since_last_purchase",
+    "preferred_location",
+    "avg_price",
+    "total_sales",
+    "unique_buyers",
+    "avg_quantity_per_order",
+    "popularity_score"
+  ],
+  "hyperparameters": {
+    "objective": "binary",
+    "metric": "auc",
+    "boosting_type": "gbdt",
+    "num_leaves": 31,
+    "learning_rate": 0.05,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "verbose": -1,
+    "random_state": 42
+  },
+  "config": {
+    "random_seed": 42,
+    "negative_sample_ratio": 4.0,
+    "train_test_split": 0.15
+  }
+}

@@ -9,25 +9,25 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-# 添加 src 到路徑
-sys.path.insert(0, str(Path(__file__).parent))
+# 添加專案根目錄到路徑
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from data_processing.data_loader import DataLoader
-from data_processing.data_cleaner import DataCleaner
-from data_processing.feature_engineer import FeatureEngineer
-from data_processing.data_validator import DataValidator
-from models.training_data_builder import TrainingDataBuilder
-from models.ml_recommender import MLRecommender
-from models.model_evaluator import ModelEvaluator
-from models.data_models import ModelMetadata, ModelMetrics, ModelType
-from config import settings
+from src.data_processing.data_loader import DataLoader
+from src.data_processing.data_cleaner import DataCleaner
+from src.data_processing.feature_engineer import FeatureEngineer
+from src.data_processing.data_validator import DataValidator
+from src.models.training_data_builder import TrainingDataBuilder
+from src.models.ml_recommender import MLRecommender
+from src.models.model_evaluator import ModelEvaluator
+from src.models.data_models import ModelMetadata, ModelMetrics, ModelType
+from src.config import settings
 
 # 設置日誌
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(settings.LOGS_DIR / 'training.log'),
+        logging.FileHandler(settings.LOGS_DIR / 'training.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

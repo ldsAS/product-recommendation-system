@@ -179,13 +179,22 @@ class DataValidator:
         # 檢查資料型態
         dtype_issues = []
         for col in df.columns:
-            if df[col].dtype == 'object':
-                # 檢查是否應該是數值型態
-                if col in ['total', 'price', 'quantity', 'actualTotal']:
-                    try:
-                        pd.to_numeric(df[col], errors='raise')
-                    except:
-                        dtype_issues.append(col)
+            try:
+                series = df[col]
+                # 確保是 Series 而不是 DataFrame
+                if isinstance(series, pd.DataFrame):
+                    continue
+                    
+                if series.dtype == 'object':
+                    # 檢查是否應該是數值型態
+                    if col in ['total', 'price', 'quantity', 'actualTotal']:
+                        try:
+                            pd.to_numeric(series, errors='raise')
+                        except:
+                            dtype_issues.append(col)
+            except Exception as e:
+                logger.warning(f"無法檢查欄位 {col} 的型態: {e}")
+                continue
         
         if dtype_issues:
             self.validation_report['warnings'].append(

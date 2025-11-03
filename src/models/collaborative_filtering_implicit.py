@@ -1,6 +1,6 @@
 """
-協同過濾模型
-使用 Implicit 庫實作 ALS 算法（替代 Surprise）
+協同過濾模型 - 使用 Implicit 庫實作
+這是 collaborative_filtering.py 的替代版本，使用 implicit 而非 surprise
 """
 import pandas as pd
 import numpy as np
@@ -24,14 +24,15 @@ logger = logging.getLogger(__name__)
 
 
 class CollaborativeFilteringModel:
-    """協同過濾模型類別"""
+    """協同過濾模型類別 - 使用 Implicit 實作"""
     
     def __init__(
         self,
         algorithm: str = 'als',
         n_factors: int = 100,
         n_epochs: int = 20,
-        regularization: float = 0.01,
+        lr_all: float = 0.005,  # 保留參數以相容舊 API
+        reg_all: float = 0.02,   # 保留參數以相容舊 API
         random_state: Optional[int] = None
     ):
         """
@@ -41,7 +42,8 @@ class CollaborativeFilteringModel:
             algorithm: 算法類型 ('als' 或 'bpr')
             n_factors: 潛在因子數量
             n_epochs: 訓練輪數
-            regularization: 正則化參數
+            lr_all: 學習率（僅用於相容性）
+            reg_all: 正則化參數
             random_state: 隨機種子
         """
         if not IMPLICIT_AVAILABLE:
@@ -50,22 +52,23 @@ class CollaborativeFilteringModel:
         self.algorithm = algorithm.lower()
         self.n_factors = n_factors
         self.n_epochs = n_epochs
-        self.regularization = regularization
+        self.lr_all = lr_all
+        self.reg_all = reg_all
         self.random_state = random_state or settings.RANDOM_SEED
         
         # 初始化模型
-        if self.algorithm == 'als':
+        if self.algorithm == 'als' or self.algorithm == 'svd':  # svd 映射到 als
             self.model = AlternatingLeastSquares(
                 factors=n_factors,
                 iterations=n_epochs,
-                regularization=regularization,
+                regularization=reg_all,
                 random_state=self.random_state
             )
-        elif self.algorithm == 'bpr':
+        elif self.algorithm == 'bpr' or self.algorithm == 'nmf':  # nmf 映射到 bpr
             self.model = BayesianPersonalizedRanking(
                 factors=n_factors,
                 iterations=n_epochs,
-                regularization=regularization,
+                regularization=reg_all,
                 random_state=self.random_state
             )
         else:
@@ -74,10 +77,8 @@ class CollaborativeFilteringModel:
         self.is_trained = False
         self.member_ids = []
         self.product_ids = []
-        self.member_id_map = {}
-        self.product_id_map = {}
-        self.reverse_member_map = {}
-        self.reverse_product_map = {}
+        self.member_id_map = {}  # member_id -> index
+        self.product_id_map = {}  # product_id -> index
         self.user_item_matrix = None
         
         logger.info(f"協同過濾模型初始化 ({self.algorithm.upper()})")
@@ -92,7 +93,7 @@ class CollaborativeFilteringModel:
         rating_col: Optional[str] = None
     ) -> csr_matrix:
         """
-        準備 Implicit 格式的資料（稀疏矩陣）
+        準備稀疏矩陣格式的資料
         
         Args:
             df: 輸入 DataFrame
@@ -101,7 +102,7 @@ class CollaborativeFilteringModel:
             rating_col: 評分欄位（None 表示使用隱式反饋）
             
         Returns:
-            稀疏矩陣 (member x product)
+            稀疏矩陣 (user x item)
         """
         logger.info("準備協同過濾資料...")
         
@@ -121,25 +122,23 @@ class CollaborativeFilteringModel:
         
         self.member_id_map = {mid: idx for idx, mid in enumerate(self.member_ids)}
         self.product_id_map = {pid: idx for idx, pid in enumerate(self.product_ids)}
-        self.reverse_member_map = {idx: mid for mid, idx in self.member_id_map.items()}
-        self.reverse_product_map = {idx: pid for pid, idx in self.product_id_map.items()}
         
         logger.info(f"  會員數: {len(self.member_ids)}")
         logger.info(f"  產品數: {len(self.product_ids)}")
         logger.info(f"  交互數: {len(data_df)}")
         
         # 轉換為索引
-        data_df['member_idx'] = data_df[member_col].map(self.member_id_map)
-        data_df['product_idx'] = data_df[product_col].map(self.product_id_map)
+        data_df['user_idx'] = data_df[member_col].map(self.member_id_map)
+        data_df['item_idx'] = data_df[product_col].map(self.product_id_map)
         
         # 建立稀疏矩陣
-        interaction_matrix = csr_matrix(
-            (data_df[rating_col].values, 
-             (data_df['member_idx'].values, data_df['product_idx'].values)),
+        user_item_matrix = csr_matrix(
+            (data_df[rating_col].values,
+             (data_df['user_idx'].values, data_df['item_idx'].values)),
             shape=(len(self.member_ids), len(self.product_ids))
         )
         
-        return interaction_matrix
+        return user_item_matrix
     
     def train(
         self,
@@ -162,7 +161,9 @@ class CollaborativeFilteringModel:
         logger.info("=" * 60)
         
         # 準備資料
-        self.user_item_matrix = self.prepare_data(train_df, member_col, product_col, rating_col)
+        self.user_item_matrix = self.prepare_data(
+            train_df, member_col, product_col, rating_col
+        )
         
         # 訓練模型
         logger.info("訓練中...")
@@ -198,11 +199,13 @@ class CollaborativeFilteringModel:
         if product_id not in self.product_id_map:
             return 0.0
         
-        member_idx = self.member_id_map[member_id]
-        product_idx = self.product_id_map[product_id]
+        user_idx = self.member_id_map[member_id]
+        item_idx = self.product_id_map[product_id]
         
         # 計算預測分數
-        score = self.model.user_factors[member_idx].dot(self.model.item_factors[product_idx])
+        user_vector = self.model.user_factors[user_idx]
+        item_vector = self.model.item_factors[item_idx]
+        score = np.dot(user_vector, item_vector)
         
         return float(score)
     
@@ -228,14 +231,14 @@ class CollaborativeFilteringModel:
         if not self.is_trained:
             raise ValueError("模型尚未訓練")
         
-        # 檢查會員是否存在
         if member_id not in self.member_id_map:
             logger.warning(f"會員 {member_id} 不在訓練資料中")
             return []
         
         user_idx = self.member_id_map[member_id]
         
-        # 使用 Implicit 的 recommend 方法
+        # 使用 implicit 的推薦功能
+        # filter_already_liked_items 參數控制是否過濾已知項目
         ids, scores = self.model.recommend(
             user_idx,
             self.user_item_matrix[user_idx],
@@ -244,20 +247,20 @@ class CollaborativeFilteringModel:
         )
         
         # 轉換回原始 ID
-        results = []
+        recommendations = []
         for item_idx, score in zip(ids, scores):
-            product_id = self.reverse_product_map[item_idx]
+            product_id = self.product_ids[item_idx]
             
-            # 如果需要排除已知產品
+            # 額外過濾已知產品
             if exclude_known and known_products and product_id in known_products:
                 continue
             
-            results.append((product_id, float(score)))
+            recommendations.append((product_id, float(score)))
             
-            if len(results) >= n:
+            if len(recommendations) >= n:
                 break
         
-        return results
+        return recommendations
     
     def batch_recommend(
         self,
@@ -322,8 +325,6 @@ class CollaborativeFilteringModel:
             'product_ids': self.product_ids,
             'member_id_map': self.member_id_map,
             'product_id_map': self.product_id_map,
-            'reverse_member_map': self.reverse_member_map,
-            'reverse_product_map': self.reverse_product_map,
             'user_item_matrix': self.user_item_matrix,
         }
         
@@ -362,11 +363,9 @@ class CollaborativeFilteringModel:
         instance.is_trained = model_data['is_trained']
         instance.member_ids = model_data['member_ids']
         instance.product_ids = model_data['product_ids']
-        instance.member_id_map = model_data.get('member_id_map', {})
-        instance.product_id_map = model_data.get('product_id_map', {})
-        instance.reverse_member_map = model_data.get('reverse_member_map', {})
-        instance.reverse_product_map = model_data.get('reverse_product_map', {})
-        instance.user_item_matrix = model_data.get('user_item_matrix', None)
+        instance.member_id_map = model_data['member_id_map']
+        instance.product_id_map = model_data['product_id_map']
+        instance.user_item_matrix = model_data['user_item_matrix']
         
         logger.info("模型載入完成")
         
@@ -390,7 +389,7 @@ def main():
     )
     
     print("=" * 60)
-    print("測試協同過濾模型")
+    print("測試協同過濾模型 (Implicit)")
     print("=" * 60)
     
     if not IMPLICIT_AVAILABLE:
