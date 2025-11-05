@@ -27,6 +27,8 @@ class RecommendationSource(str, Enum):
     CONTENT_BASED = "content_based"
     RULE_BASED = "rule_based"
     FALLBACK = "fallback"
+    POPULARITY = "popularity"
+    DIVERSITY = "diversity"
 
 
 # ============================================================================

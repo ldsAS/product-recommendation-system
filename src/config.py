@@ -30,9 +30,9 @@ class Settings(BaseSettings):
     RANDOM_SEED: int = 42
     
     # 訓練配置
-    TRAIN_TEST_SPLIT: float = 0.15
-    VALIDATION_SPLIT: float = 0.15
-    NEGATIVE_SAMPLE_RATIO: float = 4.0
+    TRAIN_TEST_SPLIT: float = 0.15  # 測試集 15%
+    VALIDATION_SPLIT: float = 0.15  # 驗證集 15%（從剩餘 85% 中分出，實際約 12.75%）
+    NEGATIVE_SAMPLE_RATIO: float = 3.0  # 負樣本比例 3:1（在 2:1 到 4:1 範圍內）
     
     # 特徵工程配置
     TOP_N_PRODUCTS: int = 3  # 最常購買的前 N 個產品

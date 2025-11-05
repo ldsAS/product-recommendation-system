@@ -134,6 +134,22 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/dashboard", response_class=HTMLResponse, tags=["Dashboard"])
+async def dashboard(request: Request):
+    """
+    監控儀表板
+    """
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.get("/trends", response_class=HTMLResponse, tags=["Dashboard"])
+async def trends(request: Request):
+    """
+    趨勢分析頁面
+    """
+    return templates.TemplateResponse("trends.html", {"request": request})
+
+
 @app.get("/api", tags=["Root"])
 async def api_root() -> Dict[str, Any]:
     """

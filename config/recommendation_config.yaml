@@ -1,0 +1,222 @@
+# 推薦系統配置文件
+# Recommendation System Configuration
+
+# 推薦策略權重配置
+strategy_weights:
+  collaborative_filtering: 0.40  # 協同過濾 40%
+  content_based: 0.30           # 內容推薦 30%
+  popularity: 0.20              # 熱門推薦 20%
+  diversity: 0.10               # 多樣性推薦 10%
+
+# 品質閾值配置
+quality_thresholds:
+  # 綜合可參考價值分數
+  overall_score:
+    critical: 40  # 低於40分觸發嚴重告警
+    warning: 50   # 低於50分觸發警告
+    target: 60    # 目標值
+  
+  # 相關性分數
+  relevance_score:
+    critical: 50
+    warning: 60
+    target: 70
+  
+  # 新穎性分數
+  novelty_score:
+    critical: 15
+    warning: 20
+    target: 30
+  
+  # 可解釋性分數
+  explainability_score:
+    critical: 60
+    warning: 70
+    target: 80
+  
+  # 多樣性分數
+  diversity_score:
+    critical: 40
+    warning: 50
+    target: 60
+
+# 性能閾值配置
+performance_thresholds:
+  # 總反應時間（毫秒）
+  total_time_ms:
+    p50: 200   # P50 目標值
+    p95: 500   # P95 目標值
+    p99: 1000  # P99 目標值
+  
+  # 特徵載入時間（毫秒）
+  feature_loading_ms:
+    max: 100
+  
+  # 模型推理時間（毫秒）
+  model_inference_ms:
+    max: 200
+  
+  # 理由生成時間（毫秒）
+  reason_generation_ms:
+    max: 50
+  
+  # 品質評估時間（毫秒）
+  quality_evaluation_ms:
+    max: 50
+
+# 監控配置
+monitoring:
+  # 啟用即時監控
+  enable_real_time: true
+  
+  # 啟用小時報告
+  enable_hourly_report: true
+  
+  # 啟用日報
+  enable_daily_report: true
+  
+  # 告警通道
+  alert_channels:
+    - console  # 控制台輸出
+    - log      # 日誌記錄
+    # - email  # 郵件通知（需配置）
+    # - slack  # Slack通知（需配置）
+  
+  # 記錄保留時間（天）
+  record_retention_days: 30
+  
+  # 告警保留時間（天）
+  alert_retention_days: 7
+
+# 降級配置
+degradation:
+  # 啟用自動降級
+  enable_auto_degradation: true
+  
+  # 降級閾值 - 品質分數
+  degradation_threshold_score: 40
+  
+  # 降級閾值 - 反應時間（毫秒）
+  degradation_threshold_time_ms: 2000
+  
+  # 降級策略類型
+  degradation_strategy: "popularity"  # popularity, simple, cached
+
+# 推薦配置
+recommendation:
+  # 預設推薦數量
+  default_count: 5
+  
+  # 最小信心分數
+  min_confidence_score: 0.0
+  
+  # 最大推薦數量
+  max_count: 20
+  
+  # 推薦理由最大數量
+  max_reasons_per_recommendation: 2
+  
+  # 啟用推薦去重
+  enable_deduplication: true
+  
+  # 啟用推薦排序
+  enable_sorting: true
+
+# 快取配置
+cache:
+  # 啟用快取
+  enabled: true
+  
+  # 快取存活時間（秒）
+  ttl_seconds: 3600
+  
+  # 快取類型
+  cache_type: "memory"  # memory, redis
+  
+  # 快取會員特徵
+  cache_member_features: true
+  
+  # 快取產品特徵
+  cache_product_features: true
+  
+  # 快取推薦結果
+  cache_recommendations: false
+
+# 模型配置
+model:
+  # 模型版本
+  version: "v1.0.0"
+  
+  # 模型類型
+  model_type: "lightgbm"  # lightgbm, xgboost, collaborative_filtering
+  
+  # 模型路徑
+  model_path: "data/models/v1.0.0"
+  
+  # 啟用協同過濾
+  enable_collaborative_filtering: true
+  
+  # 啟用內容推薦
+  enable_content_based: true
+  
+  # 啟用熱門推薦
+  enable_popularity: true
+  
+  # 啟用多樣性推薦
+  enable_diversity: true
+
+# 日誌配置
+logging:
+  # 日誌等級
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  
+  # 日誌格式
+  format: "json"  # json, text
+  
+  # 日誌檔案
+  log_file: "logs/recommendation.log"
+  
+  # 啟用性能日誌
+  enable_performance_logging: true
+  
+  # 啟用品質日誌
+  enable_quality_logging: true
+
+# A/B 測試配置
+ab_test:
+  # 啟用 A/B 測試
+  enabled: false
+  
+  # 測試組配置
+  groups:
+    - name: "control"
+      ratio: 0.5
+      strategy: "hybrid"
+      strategy_weights:
+        collaborative_filtering: 0.40
+        content_based: 0.30
+        popularity: 0.20
+        diversity: 0.10
+    
+    - name: "experiment"
+      ratio: 0.5
+      strategy: "hybrid"
+      strategy_weights:
+        collaborative_filtering: 0.50
+        content_based: 0.30
+        popularity: 0.10
+        diversity: 0.10
+
+# 安全配置
+security:
+  # 啟用 API 金鑰驗證
+  api_key_enabled: false
+  
+  # 啟用速率限制
+  rate_limit_enabled: true
+  
+  # 每分鐘請求限制
+  rate_limit_per_minute: 60
+  
+  # 啟用資料加密
+  enable_data_encryption: false

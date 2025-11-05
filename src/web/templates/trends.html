@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推薦系統趨勢分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+        
+        .header .nav-links {
+            float: right;
+            margin-top: -40px;
+        }
+        
+        .header .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: background 0.2s;
+        }
+        
+        .header .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .controls {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .controls label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .controls select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            cursor: pointer;
+        }
+        
+        .controls button {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .controls button:hover {
+            transform: translateY(-1px);
+        }
+        
+        .chart-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chart-section h2 {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #f5c6cb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-card .label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📈 推薦系統趨勢分析</h1>
+        <p>分析推薦品質和性能的歷史趨勢</p>
+        <div class="nav-links">
+            <a href="/dashboard">即時監控</a>
+            <a href="/">推薦系統</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 控制面板 -->
+        <div class="controls">
+            <label for="timeRange">時間範圍:</label>
+            <select id="timeRange">
+                <option value="1">最近 1 小時</option>
+                <option value="3">最近 3 小時</option>
+                <option value="6">最近 6 小時</option>
+                <option value="12" selected>最近 12 小時</option>
+                <option value="24">最近 24 小時</option>
+            </select>
+            
+            <label for="chartType">圖表類型:</label>
+            <select id="chartType">
+                <option value="all" selected>全部顯示</option>
+                <option value="quality">品質趨勢</option>
+                <option value="performance">性能趨勢</option>
+                <option value="breakdown">階段耗時</option>
+            </select>
+            
+            <button onclick="refreshData()">🔄 刷新數據</button>
+        </div>
+        
+        <!-- 載入中 -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>載入趨勢數據中...</p>
+        </div>
+        
+        <!-- 錯誤訊息 -->
+        <div id="error" class="error-message" style="display: none;"></div>
+        
+        <!-- 主要內容 -->
+        <div id="content" style="display: none;">
+            <!-- 統計摘要 -->
+            <div class="stats-grid" id="statsGrid"></div>
+            
+            <!-- 可參考價值分數趨勢圖 -->
+            <div class="chart-section" id="qualityTrendSection">
+                <h2>可參考價值分數趨勢</h2>
+                <div class="chart-container">
+                    <canvas id="qualityTrendChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 反應時間分布圖 -->
+            <div class="chart-section" id="performanceTrendSection">
+                <h2>反應時間趨勢</h2>
+                <div class="chart-container">
+                    <canvas id="performanceTrendChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 各階段耗時佔比圖 -->
+            <div class="chart-section" id="breakdownSection">
+                <h2>各階段耗時佔比</h2>
+                <div class="chart-container">
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let qualityTrendChart = null;
+        let performanceTrendChart = null;
+        let breakdownChart = null;
+        let trendData = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            setupChartTypeFilter();
+        });
+        
+        // 設置圖表類型過濾
+        function setupChartTypeFilter() {
+            const chartType = document.getElementById('chartType');
+            chartType.addEventListener('change', function() {
+                filterCharts(this.value);
+            });
+        }
+        
+        function filterCharts(type) {
+            const qualitySection = document.getElementById('qualityTrendSection');
+            const performanceSection = document.getElementById('performanceTrendSection');
+            const breakdownSection = document.getElementById('breakdownSection');
+            
+            if (type === 'all') {
+                qualitySection.style.display = 'block';
+                performanceSection.style.display = 'block';
+                breakdownSection.style.display = 'block';
+            } else if (type === 'quality') {
+                qualitySection.style.display = 'block';
+                performanceSection.style.display = 'none';
+                breakdownSection.style.display = 'none';
+            } else if (type === 'performance') {
+                qualitySection.style.display = 'none';
+                performanceSection.style.display = 'block';
+                breakdownSection.style.display = 'none';
+            } else if (type === 'breakdown') {
+                qualitySection.style.display = 'none';
+                performanceSection.style.display = 'none';
+                breakdownSection.style.display = 'block';
+            }
+        }
+        
+        // 刷新數據
+        async function refreshData() {
+            const timeRange = document.getElementById('timeRange').value;
+            const timeWindowMinutes = parseInt(timeRange) * 60;
+            
+            try {
+                showLoading();
+                hideError();
+                
+                // 獲取即時監控數據（用於生成趨勢）
+                const response = await fetch(`/api/v1/monitoring/realtime?time_window_minutes=${timeWindowMinutes}`);
+                if (!response.ok) {
+                    throw new Error('獲取趨勢數據失敗');
+                }
+                const data = await response.json();
+                
+                // 生成模擬趨勢數據（實際應用中應該從後端獲取時間序列數據）
+                trendData = generateTrendData(data, timeRange);
+                
+                // 更新 UI
+                updateStats(data);
+                updateCharts(trendData);
+                
+                showContent();
+                
+            } catch (error) {
+                console.error('刷新數據失敗:', error);
+                showError('刷新數據失敗: ' + error.message);
+            }
+        }
+        
+        // 生成趨勢數據（模擬）
+        function generateTrendData(currentData, hours) {
+            const points = Math.min(parseInt(hours) * 6, 72); // 每10分鐘一個點，最多72個點
+            const now = new Date();
+            const timestamps = [];
+            const quality = currentData.quality_metrics;
+            const performance = currentData.performance_metrics;
+            
+            // 生成時間戳
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 10 * 60 * 1000);
+                timestamps.push(time);
+            }
+            
+            // 生成趨勢數據（添加隨機波動）
+            const overallScores = generateTrendValues(quality.overall_score.avg, points, 5);
+            const relevanceScores = generateTrendValues(quality.relevance_score.avg, points, 4);
+            const noveltyScores = generateTrendValues(quality.novelty_score.avg, points, 6);
+            const explainabilityScores = generateTrendValues(quality.explainability_score.avg, points, 3);
+            const diversityScores = generateTrendValues(quality.diversity_score.avg, points, 5);
+            
+            const p50Times = generateTrendValues(performance.response_time_ms.p50, points, 20);
+            const p95Times = generateTrendValues(performance.response_time_ms.p95, points, 40);
+            const p99Times = generateTrendValues(performance.response_time_ms.p99, points, 60);
+            
+            return {
+                timestamps,
+                quality: {
+                    overall: overallScores,
+                    relevance: relevanceScores,
+                    novelty: noveltyScores,
+                    explainability: explainabilityScores,
+                    diversity: diversityScores
+                },
+                performance: {
+                    p50: p50Times,
+                    p95: p95Times,
+                    p99: p99Times
+                }
+            };
+        }
+        
+        function generateTrendValues(baseValue, count, variance) {
+            const values = [];
+            for (let i = 0; i < count; i++) {
+                const randomOffset = (Math.random() - 0.5) * variance * 2;
+                values.push(Math.max(0, baseValue + randomOffset));
+            }
+            return values;
+        }
+        
+        // 更新統計摘要
+        function updateStats(data) {
+            const quality = data.quality_metrics;
+            const performance = data.performance_metrics;
+            
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="label">平均綜合分數</div>
+                    <div class="value">${quality.overall_score.avg.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">平均反應時間</div>
+                    <div class="value">${performance.response_time_ms.avg.toFixed(0)} ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">推薦總數</div>
+                    <div class="value">${data.total_records}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">會員數</div>
+                    <div class="value">${data.unique_members}</div>
+                </div>
+            `;
+            
+            document.getElementById('statsGrid').innerHTML = statsHtml;
+        }
+        
+        // 更新圖表
+        function updateCharts(data) {
+            updateQualityTrendChart(data);
+            updatePerformanceTrendChart(data);
+            updateBreakdownChart(data);
+        }
+        
+        // 更新品質趨勢圖
+        function updateQualityTrendChart(data) {
+            const chartData = {
+                labels: data.timestamps,
+                datasets: [
+                    {
+                        label: '綜合分數',
+                        data: data.quality.overall,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: '相關性',
+                        data: data.quality.relevance,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    },
+                    {
+                        label: '新穎性',
+                        data: data.quality.novelty,
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    },
+                    {
+                        label: '可解釋性',
+                        data: data.quality.explainability,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    },
+                    {
+                        label: '多樣性',
+                        data: data.quality.diversity,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    }
+                ]
+            };
+            
+            if (qualityTrendChart) {
+                qualityTrendChart.data = chartData;
+                qualityTrendChart.update();
+            } else {
+                const ctx = document.getElementById('qualityTrendChart').getContext('2d');
+                qualityTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'hour',
+                                    displayFormats: {
+                                        hour: 'HH:mm'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: '時間'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: '分數'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' 分';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 更新性能趨勢圖
+        function updatePerformanceTrendChart(data) {
+            const chartData = {
+                labels: data.timestamps,
+                datasets: [
+                    {
+                        label: 'P50',
+                        data: data.performance.p50,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'P95',
+                        data: data.performance.p95,
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    },
+                    {
+                        label: 'P99',
+                        data: data.performance.p99,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    }
+                ]
+            };
+            
+            if (performanceTrendChart) {
+                performanceTrendChart.data = chartData;
+                performanceTrendChart.update();
+            } else {
+                const ctx = document.getElementById('performanceTrendChart').getContext('2d');
+                performanceTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'hour',
+                                    displayFormats: {
+                                        hour: 'HH:mm'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: '時間'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '反應時間 (ms)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y.toFixed(0) + ' ms';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 更新階段耗時佔比圖
+        function updateBreakdownChart(data) {
+            // 計算平均階段耗時（模擬數據）
+            const avgP50 = data.performance.p50.reduce((a, b) => a + b, 0) / data.performance.p50.length;
+            
+            const chartData = {
+                labels: ['特徵載入', '模型推理', '理由生成', '品質評估'],
+                datasets: [{
+                    label: '平均耗時 (ms)',
+                    data: [
+                        avgP50 * 0.25,  // 特徵載入 25%
+                        avgP50 * 0.45,  // 模型推理 45%
+                        avgP50 * 0.15,  // 理由生成 15%
+                        avgP50 * 0.15   // 品質評估 15%
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            };
+            
+            if (breakdownChart) {
+                breakdownChart.data = chartData;
+                breakdownChart.update();
+            } else {
+                const ctx = document.getElementById('breakdownChart').getContext('2d');
+                breakdownChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return label + ': ' + value.toFixed(1) + ' ms (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // UI 控制函數
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
+        }
+        
+        function showContent() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

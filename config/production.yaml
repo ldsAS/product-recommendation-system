@@ -1,0 +1,392 @@
+# 生產環境配置文件
+# Production Environment Configuration
+
+# 應用配置
+app:
+  name: "推薦系統"
+  version: "1.0.0"
+  environment: "production"
+  debug: false
+  log_level: "INFO"
+
+# 伺服器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4  # 根據 CPU 核心數調整
+  timeout: 60
+  keepalive: 5
+
+# 資料庫配置
+database:
+  # 主資料庫（讀寫）
+  primary:
+    host: "${DB_HOST}"
+    port: 5432
+    database: "${DB_NAME}"
+    user: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+    pool_size: 20
+    max_overflow: 10
+    pool_timeout: 30
+    pool_recycle: 3600
+  
+  # 只讀副本（可選）
+  replica:
+    enabled: false
+    host: "${DB_REPLICA_HOST}"
+    port: 5432
+    database: "${DB_NAME}"
+    user: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+    pool_size: 10
+
+# Redis 配置（快取）
+redis:
+  enabled: true
+  host: "${REDIS_HOST}"
+  port: 6379
+  password: "${REDIS_PASSWORD}"
+  db: 0
+  max_connections: 50
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  
+  # 快取配置
+  cache:
+    default_ttl: 3600  # 預設快取時間（秒）
+    member_features_ttl: 1800  # 會員特徵快取時間
+    product_info_ttl: 3600  # 產品資訊快取時間
+    model_predictions_ttl: 300  # 模型預測快取時間
+
+# 推薦系統配置
+recommendation:
+  # 模型配置
+  model:
+    path: "data/models/recommendation_model.txt"
+    version: "v1.0.0"
+    type: "lightgbm"
+    
+  # 推薦參數
+  default_top_k: 5
+  max_top_k: 20
+  min_confidence: 0.0
+  
+  # 策略權重
+  strategy_weights:
+    collaborative_filtering: 0.40
+    content_based: 0.30
+    popularity: 0.20
+    diversity: 0.10
+  
+  # 品質閾值
+  quality_thresholds:
+    overall_score:
+      critical: 40
+      warning: 50
+      target: 60
+    relevance_score:
+      critical: 50
+      warning: 60
+      target: 70
+    novelty_score:
+      critical: 15
+      warning: 20
+      target: 30
+    explainability_score:
+      critical: 60
+      warning: 70
+      target: 80
+    diversity_score:
+      critical: 40
+      warning: 50
+      target: 60
+  
+  # 性能閾值
+  performance_thresholds:
+    total_time_ms:
+      p50: 200
+      p95: 500
+      p99: 1000
+    feature_loading_ms:
+      max: 100
+    model_inference_ms:
+      max: 200
+  
+  # 降級配置
+  degradation:
+    enable_auto_degradation: true
+    degradation_threshold_score: 40
+    degradation_threshold_time_ms: 2000
+    fallback_strategy: "popularity"
+
+# 監控配置
+monitoring:
+  # 即時監控
+  enable_real_time: true
+  record_retention_days: 7
+  
+  # 報告生成
+  enable_hourly_report: true
+  enable_daily_report: true
+  report_retention_days: 30
+  
+  # 告警配置
+  alerts:
+    enabled: true
+    channels:
+      - email
+      - slack
+    
+    # Email 配置
+    email:
+      smtp_server: "${SMTP_SERVER}"
+      smtp_port: 587
+      use_tls: true
+      from_email: "${ALERT_FROM_EMAIL}"
+      to_emails:
+        - "${ALERT_TO_EMAIL_1}"
+        - "${ALERT_TO_EMAIL_2}"
+      subject_prefix: "[推薦系統告警]"
+    
+    # Slack 配置
+    slack:
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#recommendations-alerts"
+      username: "推薦系統監控"
+      icon_emoji: ":warning:"
+    
+    # 告警規則
+    rules:
+      critical:
+        - metric: "overall_score"
+          condition: "< 40"
+          cooldown_minutes: 15
+        - metric: "total_time_ms"
+          condition: "> 2000"
+          cooldown_minutes: 5
+      
+      warning:
+        - metric: "overall_score"
+          condition: "< 50"
+          cooldown_minutes: 30
+        - metric: "p95_response_time"
+          condition: "> 500"
+          cooldown_minutes: 15
+
+# 日誌配置
+logging:
+  version: 1
+  disable_existing_loggers: false
+  
+  formatters:
+    standard:
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+    
+    json:
+      class: "pythonjsonlogger.jsonlogger.JsonFormatter"
+      format: "%(asctime)s %(name)s %(levelname)s %(message)s"
+  
+  handlers:
+    console:
+      class: "logging.StreamHandler"
+      level: "INFO"
+      formatter: "standard"
+      stream: "ext://sys.stdout"
+    
+    file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "INFO"
+      formatter: "json"
+      filename: "logs/app.log"
+      maxBytes: 10485760  # 10MB
+      backupCount: 10
+      encoding: "utf8"
+    
+    error_file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "ERROR"
+      formatter: "json"
+      filename: "logs/error.log"
+      maxBytes: 10485760  # 10MB
+      backupCount: 10
+      encoding: "utf8"
+  
+  loggers:
+    "":
+      level: "INFO"
+      handlers:
+        - console
+        - file
+        - error_file
+      propagate: false
+    
+    "src":
+      level: "INFO"
+      handlers:
+        - console
+        - file
+      propagate: false
+    
+    "uvicorn":
+      level: "INFO"
+      handlers:
+        - console
+        - file
+      propagate: false
+
+# 安全配置
+security:
+  # API 認證
+  api_key:
+    enabled: true
+    header_name: "X-API-Key"
+    keys:
+      - "${API_KEY_1}"
+      - "${API_KEY_2}"
+  
+  # CORS 配置
+  cors:
+    enabled: true
+    allow_origins:
+      - "https://your-domain.com"
+      - "https://admin.your-domain.com"
+    allow_methods:
+      - "GET"
+      - "POST"
+    allow_headers:
+      - "Content-Type"
+      - "X-API-Key"
+    allow_credentials: true
+  
+  # 速率限制
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+    burst: 20
+
+# 效能優化
+performance:
+  # 連接池
+  connection_pool:
+    size: 20
+    max_overflow: 10
+    timeout: 30
+  
+  # 快取策略
+  cache_strategy:
+    enabled: true
+    backend: "redis"
+    default_ttl: 3600
+  
+  # 批次處理
+  batch_processing:
+    enabled: true
+    batch_size: 100
+    timeout: 5
+
+# 健康檢查
+health_check:
+  enabled: true
+  endpoint: "/health"
+  interval_seconds: 30
+  timeout_seconds: 5
+  
+  checks:
+    - name: "database"
+      type: "database"
+      critical: true
+    
+    - name: "redis"
+      type: "redis"
+      critical: false
+    
+    - name: "model"
+      type: "model"
+      critical: true
+
+# 備份配置
+backup:
+  enabled: true
+  
+  # 資料庫備份
+  database:
+    schedule: "0 2 * * *"  # 每天凌晨2點
+    retention_days: 30
+    backup_path: "/backups/database"
+  
+  # 模型備份
+  model:
+    schedule: "0 3 * * 0"  # 每週日凌晨3點
+    retention_weeks: 4
+    backup_path: "/backups/models"
+  
+  # 日誌備份
+  logs:
+    schedule: "0 4 * * *"  # 每天凌晨4點
+    retention_days: 90
+    backup_path: "/backups/logs"
+
+# 監控指標
+metrics:
+  enabled: true
+  
+  # Prometheus 配置
+  prometheus:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+  
+  # 自訂指標
+  custom_metrics:
+    - name: "recommendation_requests_total"
+      type: "counter"
+      description: "推薦請求總數"
+    
+    - name: "recommendation_latency_seconds"
+      type: "histogram"
+      description: "推薦延遲（秒）"
+      buckets: [0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
+    
+    - name: "recommendation_quality_score"
+      type: "gauge"
+      description: "推薦品質分數"
+    
+    - name: "degradation_count_total"
+      type: "counter"
+      description: "降級次數"
+
+# 功能開關
+feature_flags:
+  enhanced_recommendation: true
+  quality_monitoring: true
+  performance_tracking: true
+  auto_degradation: true
+  a_b_testing: true
+  real_time_dashboard: true
+
+# 環境變數說明
+# 請在 .env 文件中設置以下環境變數：
+# 
+# 資料庫配置:
+#   DB_HOST=your-database-host
+#   DB_NAME=recommendation_db
+#   DB_USER=your-db-user
+#   DB_PASSWORD=your-db-password
+#   DB_REPLICA_HOST=your-replica-host (可選)
+# 
+# Redis 配置:
+#   REDIS_HOST=your-redis-host
+#   REDIS_PASSWORD=your-redis-password
+# 
+# 告警配置:
+#   SMTP_SERVER=smtp.gmail.com
+#   ALERT_FROM_EMAIL=alerts@your-domain.com
+#   ALERT_TO_EMAIL_1=team@your-domain.com
+#   ALERT_TO_EMAIL_2=admin@your-domain.com
+#   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+# 
+# 安全配置:
+#   API_KEY_1=your-api-key-1
+#   API_KEY_2=your-api-key-2

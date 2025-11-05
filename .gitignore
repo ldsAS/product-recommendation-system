@@ -92,3 +92,10 @@ test_output.txt
 
 # 健康檢查報告（臨時檔案）
 PROJECT_HEALTH_CHECK.md
+SYSTEM_CHECK_REPORT.md
+
+# A/B 測試數據（可選，視需求決定是否上傳）
+data/ab_test_data.json
+
+# 備份文件
+backups/

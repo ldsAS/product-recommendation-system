@@ -262,7 +262,7 @@ class TrainingPipeline:
         return data
     
     def create_metadata(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """建立模型元資料"""
+        """建立模型元資料（需求 2.4: 記錄所有超參數配置）"""
         stats = data['data_statistics']
         
         metadata = {
@@ -274,7 +274,14 @@ class TrainingPipeline:
             'test_samples': stats['test']['total_samples'],
             'metrics': data['metrics'],
             'feature_names': data['model'].feature_names,
-            'hyperparameters': data['model'].params,
+            'hyperparameters': data['model'].params,  # 需求 2.4: 記錄超參數
+            'hyperparameter_optimization': {  # 需求 2.1-2.4: 記錄優化資訊
+                'num_leaves': data['model'].params.get('num_leaves', 'N/A'),
+                'learning_rate': data['model'].params.get('learning_rate', 'N/A'),
+                'max_depth': data['model'].params.get('max_depth', 'N/A'),
+                'early_stopping_rounds': 20,
+                'optimization_notes': '超參數已根據需求 2.1-2.4 優化'
+            },
             'config': {
                 'random_seed': settings.RANDOM_SEED,
                 'negative_sample_ratio': settings.NEGATIVE_SAMPLE_RATIO,

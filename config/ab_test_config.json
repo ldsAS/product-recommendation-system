@@ -1,0 +1,32 @@
+{
+  "test_enabled": false,
+  "test_name": "推薦策略權重優化測試",
+  "start_time": "2025-11-04T16:29:44.957106",
+  "end_time": "2025-11-04T16:29:45.292418",
+  "test_groups": [
+    {
+      "group_id": "control",
+      "group_name": "對照組（原策略）",
+      "strategy_config": {
+        "collaborative_filtering": 0.4,
+        "content_based": 0.3,
+        "popularity": 0.2,
+        "diversity": 0.1
+      },
+      "traffic_ratio": 0.5,
+      "description": "使用原有的混合推薦策略"
+    },
+    {
+      "group_id": "test_a",
+      "group_name": "測試組 A（強化協同過濾）",
+      "strategy_config": {
+        "collaborative_filtering": 0.6,
+        "content_based": 0.2,
+        "popularity": 0.1,
+        "diversity": 0.1
+      },
+      "traffic_ratio": 0.5,
+      "description": "提高協同過濾權重至 60%"
+    }
+  ]
+}

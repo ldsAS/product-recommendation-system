@@ -55,18 +55,22 @@ class MLRecommender:
         elif self.model_type == 'xgboost' and not XGBOOST_AVAILABLE:
             raise ImportError("請安裝 XGBoost: pip install xgboost")
         
-        # 設置預設參數
+        # 設置預設參數（優化後的超參數，需求 2.1-2.4）
         if params is None:
             if self.model_type == 'lightgbm':
                 params = {
                     'objective': 'binary',
                     'metric': 'auc',
                     'boosting_type': 'gbdt',
-                    'num_leaves': 31,
-                    'learning_rate': 0.05,
+                    'num_leaves': 75,  # 需求 2.1: 調整為 50-100 範圍內
+                    'learning_rate': 0.03,  # 需求 2.2: 調整為 0.01-0.05 範圍內
+                    'max_depth': 8,  # 需求 2.3: 調整為 6-10 範圍內
                     'feature_fraction': 0.9,
                     'bagging_fraction': 0.8,
                     'bagging_freq': 5,
+                    'min_child_samples': 20,
+                    'reg_alpha': 0.1,
+                    'reg_lambda': 0.1,
                     'verbose': -1,
                     'random_state': self.random_state
                 }
@@ -74,10 +78,13 @@ class MLRecommender:
                 params = {
                     'objective': 'binary:logistic',
                     'eval_metric': 'auc',
-                    'max_depth': 6,
-                    'learning_rate': 0.05,
+                    'max_depth': 8,  # 需求 2.3: 調整為 6-10 範圍內
+                    'learning_rate': 0.03,  # 需求 2.2: 調整為 0.01-0.05 範圍內
                     'subsample': 0.8,
                     'colsample_bytree': 0.9,
+                    'min_child_weight': 3,
+                    'reg_alpha': 0.1,
+                    'reg_lambda': 0.1,
                     'random_state': self.random_state
                 }
         
@@ -238,10 +245,10 @@ class MLRecommender:
         member_features_df: Optional[pd.DataFrame] = None,
         product_features_df: Optional[pd.DataFrame] = None,
         num_boost_round: int = 100,
-        early_stopping_rounds: int = 10
+        early_stopping_rounds: int = 20  # 需求 2.4: 設置 patience 為 20 輪
     ):
         """
-        訓練模型
+        訓練模型（使用優化後的超參數）
         
         Args:
             train_df: 訓練資料
@@ -249,11 +256,14 @@ class MLRecommender:
             member_features_df: 會員特徵
             product_features_df: 產品特徵
             num_boost_round: 訓練輪數
-            early_stopping_rounds: 早停輪數
+            early_stopping_rounds: 早停輪數（需求 2.4: patience=20）
         """
         logger.info("=" * 60)
         logger.info("開始訓練機器學習推薦模型")
         logger.info("=" * 60)
+        logger.info(f"超參數配置:")
+        for key, value in self.params.items():
+            logger.info(f"  {key}: {value}")
         
         # 準備特徵
         train_full = self.prepare_features(
@@ -280,6 +290,7 @@ class MLRecommender:
             y_val = val_full['label']
             eval_set = [(X_val, y_val)]
             logger.info(f"驗證集: {len(X_val)} 樣本")
+            logger.info(f"早停機制: 啟用 (patience={early_stopping_rounds})")  # 需求 2.4
         
         # 訓練模型
         logger.info("訓練中...")
@@ -288,15 +299,17 @@ class MLRecommender:
             train_data = lgb.Dataset(X_train, label=y_train)
             valid_data = lgb.Dataset(X_val, label=y_val) if eval_set else None
             
+            # 需求 2.4: 添加 early_stopping 機制
+            callbacks = [lgb.log_evaluation(10)]
+            if valid_data:
+                callbacks.append(lgb.early_stopping(early_stopping_rounds))
+            
             self.model = lgb.train(
                 self.params,
                 train_data,
                 num_boost_round=num_boost_round,
                 valid_sets=[valid_data] if valid_data else None,
-                callbacks=[
-                    lgb.early_stopping(early_stopping_rounds),
-                    lgb.log_evaluation(10)
-                ] if valid_data else [lgb.log_evaluation(10)]
+                callbacks=callbacks
             )
             
             # 獲取特徵重要性
@@ -309,6 +322,7 @@ class MLRecommender:
             
             evals = [(dval, 'validation')] if dval else []
             
+            # 需求 2.4: 添加 early_stopping 機制
             self.model = xgb.train(
                 self.params,
                 dtrain,
@@ -336,6 +350,11 @@ class MLRecommender:
         
         logger.info("=" * 60)
         logger.info("模型訓練完成")
+        logger.info(f"✓ 超參數已優化:")
+        logger.info(f"  - num_leaves: {self.params.get('num_leaves', 'N/A')} (需求 2.1: 50-100)")
+        logger.info(f"  - learning_rate: {self.params.get('learning_rate', 'N/A')} (需求 2.2: 0.01-0.05)")
+        logger.info(f"  - max_depth: {self.params.get('max_depth', 'N/A')} (需求 2.3: 6-10)")
+        logger.info(f"  - early_stopping: {early_stopping_rounds} rounds (需求 2.4)")
         logger.info("=" * 60)
     
     def predict_proba(
