@@ -19,6 +19,7 @@ from pathlib import Path
 from src.config import settings
 from src.models.data_models import HealthCheckResponse, ErrorResponse
 from src.api.routes import recommendations
+from src.api.routes import monitoring
 from src.api.error_handlers import register_error_handlers
 
 # 設置日誌
@@ -69,6 +70,7 @@ app = FastAPI(
 
 # 註冊路由
 app.include_router(recommendations.router)
+app.include_router(monitoring.router)
 
 # 註冊錯誤處理器
 register_error_handlers(app)
