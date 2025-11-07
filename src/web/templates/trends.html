@@ -258,6 +258,9 @@
         let breakdownChart = null;
         let trendData = null;
         
+        // 台灣時區偏移（UTC+8）
+        const TW_TIMEZONE_OFFSET = 8 * 60; // 分鐘
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             refreshData();
@@ -305,18 +308,25 @@
                 showLoading();
                 hideError();
                 
-                // 獲取即時監控數據（用於生成趨勢）
-                const response = await fetch(`/api/v1/monitoring/realtime?time_window_minutes=${timeWindowMinutes}`);
-                if (!response.ok) {
-                    throw new Error('獲取趨勢數據失敗');
+                // 獲取統計數據
+                const statsResponse = await fetch(`/api/v1/monitoring/realtime?time_window_minutes=${timeWindowMinutes}`);
+                if (!statsResponse.ok) {
+                    throw new Error('獲取統計數據失敗');
                 }
-                const data = await response.json();
+                const statsData = await statsResponse.json();
                 
-                // 生成模擬趨勢數據（實際應用中應該從後端獲取時間序列數據）
-                trendData = generateTrendData(data, timeRange);
+                // 獲取原始監控記錄（用於生成趨勢圖）
+                const recordsResponse = await fetch(`/api/v1/monitoring/records?time_window_minutes=${timeWindowMinutes}&limit=1000`);
+                if (!recordsResponse.ok) {
+                    throw new Error('獲取監控記錄失敗');
+                }
+                const recordsData = await recordsResponse.json();
+                
+                // 使用真實記錄生成趨勢數據
+                trendData = generateTrendDataFromRecords(recordsData.records);
                 
                 // 更新 UI
-                updateStats(data);
+                updateStats(statsData);
                 updateCharts(trendData);
                 
                 showContent();
@@ -327,30 +337,67 @@
             }
         }
         
-        // 生成趨勢數據（模擬）
-        function generateTrendData(currentData, hours) {
-            const points = Math.min(parseInt(hours) * 6, 72); // 每10分鐘一個點，最多72個點
-            const now = new Date();
-            const timestamps = [];
-            const quality = currentData.quality_metrics;
-            const performance = currentData.performance_metrics;
-            
-            // 生成時間戳
-            for (let i = points - 1; i >= 0; i--) {
-                const time = new Date(now.getTime() - i * 10 * 60 * 1000);
-                timestamps.push(time);
+        // 從真實記錄生成趨勢數據
+        function generateTrendDataFromRecords(records) {
+            if (!records || records.length === 0) {
+                // 如果沒有記錄，返回空數據
+                return {
+                    timestamps: [],
+                    quality: {
+                        overall: [],
+                        relevance: [],
+                        novelty: [],
+                        explainability: [],
+                        diversity: []
+                    },
+                    performance: {
+                        p50: [],
+                        p95: [],
+                        p99: []
+                    }
+                };
             }
             
-            // 生成趨勢數據（添加隨機波動）
-            const overallScores = generateTrendValues(quality.overall_score.avg, points, 5);
-            const relevanceScores = generateTrendValues(quality.relevance_score.avg, points, 4);
-            const noveltyScores = generateTrendValues(quality.novelty_score.avg, points, 6);
-            const explainabilityScores = generateTrendValues(quality.explainability_score.avg, points, 3);
-            const diversityScores = generateTrendValues(quality.diversity_score.avg, points, 5);
+            // 按時間排序記錄
+            const sortedRecords = records.sort((a, b) => {
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            });
             
-            const p50Times = generateTrendValues(performance.response_time_ms.p50, points, 20);
-            const p95Times = generateTrendValues(performance.response_time_ms.p95, points, 40);
-            const p99Times = generateTrendValues(performance.response_time_ms.p99, points, 60);
+            // 提取數據
+            const timestamps = [];
+            const overallScores = [];
+            const relevanceScores = [];
+            const noveltyScores = [];
+            const explainabilityScores = [];
+            const diversityScores = [];
+            const responseTimes = [];
+            
+            sortedRecords.forEach(record => {
+                // 解析時間戳（保持原始時區信息）
+                const timestamp = new Date(record.timestamp);
+                timestamps.push(timestamp);
+                
+                if (record.reference_value_score) {
+                    overallScores.push(record.reference_value_score.overall_score || 0);
+                    relevanceScores.push(record.reference_value_score.relevance_score || 0);
+                    noveltyScores.push(record.reference_value_score.novelty_score || 0);
+                    explainabilityScores.push(record.reference_value_score.explainability_score || 0);
+                    diversityScores.push(record.reference_value_score.diversity_score || 0);
+                }
+                
+                responseTimes.push(record.response_time_ms || 0);
+            });
+            
+            // 計算性能百分位數（簡化版本，使用所有數據點）
+            const sortedTimes = [...responseTimes].sort((a, b) => a - b);
+            const p50 = sortedTimes[Math.floor(sortedTimes.length * 0.5)] || 0;
+            const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)] || 0;
+            const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)] || 0;
+            
+            // 為每個時間點生成性能數據（使用實際響應時間）
+            const p50Times = responseTimes.map(t => Math.min(t, p50 * 1.2));
+            const p95Times = responseTimes.map(t => Math.min(t, p95 * 1.2));
+            const p99Times = responseTimes.map(t => Math.min(t, p99 * 1.2));
             
             return {
                 timestamps,
@@ -367,15 +414,6 @@
                     p99: p99Times
                 }
             };
-        }
-        
-        function generateTrendValues(baseValue, count, variance) {
-            const values = [];
-            for (let i = 0; i < count; i++) {
-                const randomOffset = (Math.random() - 0.5) * variance * 2;
-                values.push(Math.max(0, baseValue + randomOffset));
-            }
-            return values;
         }
         
         // 更新統計摘要
@@ -486,12 +524,27 @@
                                 time: {
                                     unit: 'hour',
                                     displayFormats: {
-                                        hour: 'HH:mm'
+                                        hour: 'MM/dd HH:mm'
+                                    },
+                                    tooltipFormat: 'yyyy/MM/dd HH:mm:ss'
+                                },
+                                ticks: {
+                                    callback: function(value, index, ticks) {
+                                        // 將時間轉換為台灣時區顯示
+                                        const date = new Date(value);
+                                        return date.toLocaleString('zh-TW', {
+                                            timeZone: 'Asia/Taipei',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: false
+                                        });
                                     }
                                 },
                                 title: {
                                     display: true,
-                                    text: '時間'
+                                    text: '時間 (台灣時區 UTC+8)'
                                 }
                             },
                             y: {
@@ -506,6 +559,20 @@
                         plugins: {
                             tooltip: {
                                 callbacks: {
+                                    title: function(context) {
+                                        // 顯示台灣時區時間
+                                        const date = new Date(context[0].parsed.x);
+                                        return date.toLocaleString('zh-TW', { 
+                                            timeZone: 'Asia/Taipei',
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: false
+                                        });
+                                    },
                                     label: function(context) {
                                         return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' 分';
                                     }
@@ -573,12 +640,27 @@
                                 time: {
                                     unit: 'hour',
                                     displayFormats: {
-                                        hour: 'HH:mm'
+                                        hour: 'MM/dd HH:mm'
+                                    },
+                                    tooltipFormat: 'yyyy/MM/dd HH:mm:ss'
+                                },
+                                ticks: {
+                                    callback: function(value, index, ticks) {
+                                        // 將時間轉換為台灣時區顯示
+                                        const date = new Date(value);
+                                        return date.toLocaleString('zh-TW', {
+                                            timeZone: 'Asia/Taipei',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: false
+                                        });
                                     }
                                 },
                                 title: {
                                     display: true,
-                                    text: '時間'
+                                    text: '時間 (台灣時區 UTC+8)'
                                 }
                             },
                             y: {
@@ -592,6 +674,20 @@
                         plugins: {
                             tooltip: {
                                 callbacks: {
+                                    title: function(context) {
+                                        // 顯示台灣時區時間
+                                        const date = new Date(context[0].parsed.x);
+                                        return date.toLocaleString('zh-TW', { 
+                                            timeZone: 'Asia/Taipei',
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: false
+                                        });
+                                    },
                                     label: function(context) {
                                         return context.dataset.label + ': ' + context.parsed.y.toFixed(0) + ' ms';
                                     }
