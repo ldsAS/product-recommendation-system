@@ -21,13 +21,45 @@
 
 ## 🚀 快速開始
 
-### 系統需求
+### 🐳 方式 1: Docker 一鍵部署（推薦）
+
+最簡單的部署方式！只需 3 個步驟：
+
+```bash
+# 1. 複製環境變數文件
+cp .env.example .env
+
+# 2. 編輯 .env 設置密碼（至少設置 DB_PASSWORD 和 REDIS_PASSWORD）
+# Windows: notepad .env
+# Linux/Mac: nano .env
+
+# 3. 一鍵啟動
+# Windows:
+quick-start.bat
+
+# Linux/Mac:
+chmod +x quick-start.sh
+./quick-start.sh
+```
+
+**啟動後訪問**:
+- 主頁面: http://localhost:8000
+- API 文檔: http://localhost:8000/docs
+- 監控儀表板: http://localhost:8000/dashboard
+
+📖 **詳細說明**: 查看 [Docker 快速開始指南](README_DOCKER.md)
+
+---
+
+### 💻 方式 2: 本地安裝
+
+#### 系統需求
 
 - Python 3.9 或更高版本
 - 4GB+ RAM（建議 8GB）
 - pip 或 conda 套件管理器
 
-### 安裝步驟
+#### 安裝步驟
 
 #### 1. 克隆專案
 
@@ -141,6 +173,9 @@ python scripts/test_api.py
 │           ├── requirements.md    # 需求文件
 │           ├── design.md          # 設計文件
 │           └── tasks.md           # 任務清單
+├── config/                        # 配置文件
+│   ├── recommendation_config.yaml # 推薦系統配置
+│   └── production.yaml            # 生產環境配置
 ├── data/
 │   ├── raw/                       # 原始資料
 │   ├── processed/                 # 處理後資料
@@ -176,6 +211,14 @@ python scripts/test_api.py
 ├── docs/                          # 文件
 ├── logs/                          # 日誌
 ├── scripts/                       # 腳本工具
+│   ├── deploy.sh                  # 部署腳本
+│   └── init_db.sql                # 資料庫初始化
+├── docker-compose.yml             # Docker Compose 配置
+├── Dockerfile                     # Docker 映像配置
+├── quick-start.bat                # Windows 一鍵啟動
+├── quick-start.sh                 # Linux/Mac 一鍵啟動
+├── README_DOCKER.md               # Docker 快速指南
+├── DOCKER_QUICK_START.md          # Docker 詳細指南
 ├── requirements.txt               # Python 依賴
 ├── .env.example                   # 環境變數範本
 └── README.md                      # 本檔案
@@ -329,6 +372,7 @@ python src/api/main.py
 
 ### 系統架構
 
+#### 本地部署架構
 ```
 ┌─────────────┐
 │   銷售員    │
@@ -360,6 +404,35 @@ python src/api/main.py
 │  Model Files    │
 │  (data/models/) │
 └─────────────────┘
+```
+
+#### Docker 部署架構
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Nginx (反向代理)                      │
+│                      Port 80/443 (HTTPS)                     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────────┐
+│                  推薦系統 API (FastAPI)                       │
+│                      Port 8000                               │
+│  - Web UI                                                    │
+│  - REST API                                                  │
+│  - 監控儀表板                                                 │
+└─────────┬────────────────────────────────┬──────────────────┘
+          │                                │
+┌─────────┴─────────┐          ┌──────────┴──────────┐
+│   PostgreSQL      │          │      Redis          │
+│   Port 5432       │          │    Port 6379        │
+│  - 監控記錄        │          │   - 快取            │
+│  - 告警記錄        │          │   - 會話            │
+└───────────────────┘          └─────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      監控系統                                 │
+│  - Prometheus (Port 9090)                                   │
+│  - Grafana (Port 3000)                                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## ❓ 疑難排解
@@ -521,21 +594,41 @@ cat data/DATA_ANALYSIS_REPORT.md
 
 ## 📚 相關文件
 
-- [安裝指南](INSTALL.md) - 詳細的安裝說明
-- [模型訓練文件](docs/MODEL_TRAINING.md) - 模型訓練與調優
-- [部署指南](docs/DEPLOYMENT.md) - 生產環境部署
-- [專案總結](docs/PROJECT_SUMMARY.md) - 專案架構與設計決策
-- [Colab 快速體驗](docs/COLAB_GUIDE.md) - 在 Google Colab 上試用（實驗性功能）
+### 部署相關
+- [🐳 Docker 快速開始](README_DOCKER.md) - Docker 一鍵部署指南
+- [📦 Docker 詳細指南](DOCKER_QUICK_START.md) - 完整的 Docker 部署說明
+- [🚀 部署指南](docs/DEPLOYMENT_GUIDE.md) - 生產環境部署
+
+### 開發相關
+- [📖 安裝指南](INSTALL.md) - 詳細的本地安裝說明
+- [🤖 模型訓練文件](docs/MODEL_TRAINING.md) - 模型訓練與調優
+- [📊 專案總結](docs/PROJECT_SUMMARY.md) - 專案架構與設計決策
+
+### 功能相關
+- [📈 監控儀表板使用指南](docs/MONITORING_DASHBOARD_GUIDE.md) - 監控系統使用說明
+- [⚡ 性能追蹤指南](docs/PERFORMANCE_TRACKING_GUIDE.md) - 性能監控與優化
+- [🧪 Colab 快速體驗](docs/COLAB_GUIDE.md) - 在 Google Colab 上試用（實驗性功能）
 
 ## 🗺️ 開發路線圖
 
+### 已完成 ✅
+- [x] 提供 Docker Compose 一鍵部署
+- [x] 建立效能監控儀表板
+- [x] 增加 Web UI 介面
+- [x] 實作品質監控系統
+- [x] 實作性能追蹤功能
+- [x] 支援 A/B 測試框架
+
+### 進行中 🚧
 - [ ] 支援更多推薦演算法（深度學習模型）
 - [ ] 實作即時模型更新機制
-- [ ] 增加 Web UI 介面
+
+### 計劃中 📋
 - [ ] 支援多語言推薦理由
 - [ ] 整合更多資料來源
-- [ ] 提供 Docker Compose 一鍵部署
-- [ ] 建立效能監控儀表板
+- [ ] 實作自動化模型訓練流程
+- [ ] 增加推薦解釋性視覺化
+- [ ] 支援多租戶架構
 
 ---
 
