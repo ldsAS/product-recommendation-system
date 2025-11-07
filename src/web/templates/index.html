@@ -27,6 +27,8 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            position: relative;
+            padding-top: 50px;
         }
         
         .header h1 {
@@ -37,6 +39,45 @@
         .header p {
             font-size: 1.1em;
             opacity: 0.9;
+        }
+        
+        .nav-links {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: background 0.2s;
+            font-size: 0.95em;
+            white-space: nowrap;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        @media (max-width: 600px) {
+            .header {
+                padding-top: 60px;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .nav-links a {
+                font-size: 0.85em;
+                padding: 6px 12px;
+            }
         }
         
         .card {
@@ -209,6 +250,10 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="nav-links">
+                <a href="/dashboard">📊 即時監控</a>
+                <a href="/trends">📈 趨勢分析</a>
+            </div>
             <h1>🎯 產品推薦系統</h1>
             <p>輸入會員資訊，獲取個性化產品推薦</p>
         </div>
