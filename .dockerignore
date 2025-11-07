@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 虛擬環境
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# 環境變數（不要複製到映像中）
+.env
+.env.*
+
+# 測試
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# 日誌
+logs/
+*.log
+
+# 資料（太大，應該用 volume 掛載）
+data/raw/*
+data/processed/*
+data/models/*
+
+# 文檔
+docs/
+*.md
+!README.md
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# 其他
+.DS_Store
+Thumbs.db
