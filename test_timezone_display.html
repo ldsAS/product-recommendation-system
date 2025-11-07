@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>時區顯示測試</title>
+</head>
+<body>
+    <h1>時區顯示測試</h1>
+    <div id="results"></div>
+    
+    <script>
+        // 測試時間戳（台灣時區 UTC+8）
+        const testTimestamp = '2025-11-07T16:54:46.297192+08:00';
+        
+        const results = document.getElementById('results');
+        
+        // 1. 原始時間戳
+        results.innerHTML += `<p><strong>原始時間戳:</strong> ${testTimestamp}</p>`;
+        
+        // 2. JavaScript Date 對象
+        const date = new Date(testTimestamp);
+        results.innerHTML += `<p><strong>Date 對象:</strong> ${date}</p>`;
+        
+        // 3. ISO 字符串
+        results.innerHTML += `<p><strong>ISO 字符串:</strong> ${date.toISOString()}</p>`;
+        
+        // 4. 本地時間字符串
+        results.innerHTML += `<p><strong>本地時間:</strong> ${date.toLocaleString()}</p>`;
+        
+        // 5. 台灣時區時間（使用 toLocaleString）
+        const twTime = date.toLocaleString('zh-TW', {
+            timeZone: 'Asia/Taipei',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        results.innerHTML += `<p><strong>台灣時區時間 (Asia/Taipei):</strong> ${twTime}</p>`;
+        
+        // 6. UTC 時間
+        const utcTime = date.toLocaleString('zh-TW', {
+            timeZone: 'UTC',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        results.innerHTML += `<p><strong>UTC 時間:</strong> ${utcTime}</p>`;
+        
+        // 7. 時間戳（毫秒）
+        results.innerHTML += `<p><strong>時間戳 (ms):</strong> ${date.getTime()}</p>`;
+        
+        // 8. 測試 Chart.js 格式
+        const chartFormat = date.toLocaleString('zh-TW', {
+            timeZone: 'Asia/Taipei',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        results.innerHTML += `<p><strong>Chart.js 顯示格式:</strong> ${chartFormat}</p>`;
+        
+        // 9. 驗證時區偏移
+        const offset = date.getTimezoneOffset();
+        results.innerHTML += `<p><strong>瀏覽器時區偏移 (分鐘):</strong> ${offset}</p>`;
+        results.innerHTML += `<p><strong>瀏覽器時區偏移 (小時):</strong> ${-offset / 60}</p>`;
+        
+        // 10. 結論
+        results.innerHTML += '<hr>';
+        if (twTime.includes('16:54:46')) {
+            results.innerHTML += '<p style="color: green;"><strong>✓ 時區轉換正確！顯示為台灣時間 16:54:46</strong></p>';
+        } else {
+            results.innerHTML += '<p style="color: red;"><strong>✗ 時區轉換錯誤！</strong></p>';
+        }
+    </script>
+</body>
+</html>
