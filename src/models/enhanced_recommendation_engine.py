@@ -98,10 +98,10 @@ class EnhancedRecommendationEngine:
     
     # 策略權重配置
     STRATEGY_WEIGHTS = {
-        'collaborative_filtering': 0.40,  # 協同過濾 40%
-        'content_based': 0.30,           # 內容推薦 30%
-        'popularity': 0.20,              # 熱門推薦 20%
-        'diversity': 0.10                # 多樣性推薦 10%
+        'collaborative_filtering': 0.00,  # 協同過濾 0% (暫時禁用，因為沒有 cf_model)
+        'content_based': 1.00,           # 內容推薦 100% (使用 ML 模型)
+        'popularity': 0.00,              # 熱門推薦 0%
+        'diversity': 0.00                # 多樣性推薦 0%
     }
     
     def __init__(self, model_path: Optional[Path] = None):

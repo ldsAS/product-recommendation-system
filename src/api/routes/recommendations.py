@@ -22,6 +22,7 @@ from src.models.recommendation_engine import RecommendationEngine
 from src.models.enhanced_recommendation_engine import EnhancedRecommendationEngine
 from src.utils.validators import validate_recommendation_request
 from src.utils.quality_monitor import QualityMonitor
+from src.utils.memory_monitor_store import get_monitor_store
 from src.config import settings
 
 logger = logging.getLogger(__name__)
@@ -298,6 +299,24 @@ async def get_recommendations(
                 strategy_used=enhanced_response.strategy_used,
                 is_degraded=enhanced_response.is_degraded
             )
+            
+            # 保存到內存監控存儲（用於趨勢分析）
+            monitor_store = get_monitor_store()
+            monitor_store.add_record({
+                'request_id': request_id,
+                'member_code': member_info.member_code,
+                'timestamp': enhanced_response.timestamp.isoformat(),
+                'reference_value_score': {
+                    'overall_score': enhanced_response.reference_value_score.overall_score,
+                    'relevance_score': enhanced_response.reference_value_score.relevance_score,
+                    'novelty_score': enhanced_response.reference_value_score.novelty_score,
+                    'explainability_score': enhanced_response.reference_value_score.explainability_score,
+                    'diversity_score': enhanced_response.reference_value_score.diversity_score
+                },
+                'response_time_ms': enhanced_response.performance_metrics.total_time_ms,
+                'recommendation_count': len(recommendations),
+                'is_degraded': enhanced_response.is_degraded
+            })
             
             # 觸發告警（如果需要）
             alerts = quality_monitor.trigger_alerts(
