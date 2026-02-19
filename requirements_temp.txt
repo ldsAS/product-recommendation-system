@@ -1,14 +1,12 @@
 # 核心資料處理
 pandas>=2.0.0
 numpy>=1.24.0
-pyarrow>=12.0.0  # Parquet 支援
+pyarrow>=12.0.0
 
 # 機器學習
 scikit-learn>=1.3.0
 lightgbm>=4.0.0
 xgboost>=2.0.0
-# scikit-surprise>=1.1.3  # 協同過濾 - 需要 C++ 編譯器，改用替代方案
-# implicit>=0.7.0  # 協同過濾替代方案（支援 Python 3.11+，無需編譯）
 
 # Web 框架
 fastapi>=0.104.0
@@ -31,7 +29,7 @@ redis>=5.0.0
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
-httpx>=0.25.0  # FastAPI 測試
+httpx>=0.25.0
 
 # 開發工具
 black>=23.0.0
@@ -41,6 +39,6 @@ ipython>=8.16.0
 jupyter>=1.0.0
 
 # 其他工具
-tqdm>=4.66.0  # 進度條
-click>=8.1.0  # CLI 工具
-jinja2>=3.1.0  # 模板引擎
+tqdm>=4.66.0
+click>=8.1.0
+jinja2>=3.1.0

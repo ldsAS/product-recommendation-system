@@ -250,7 +250,7 @@ async def get_recommendations(
             
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error_response.model_dump()
+                detail=error_response.model_dump(mode='json')
             )
         
         logger.debug(f"[{request_id}] ✓ 請求驗證通過")
@@ -423,7 +423,7 @@ async def get_recommendations(
                 f"回應時間: {response_time_ms:.2f}ms"
             )
             
-            return response.model_dump()
+            return response.model_dump(mode='json')
         
     except HTTPException:
         # 重新拋出 HTTP 異常
@@ -442,7 +442,7 @@ async def get_recommendations(
         
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_response.model_dump()
+            detail=error_response.model_dump(mode='json')
         )
 
 
@@ -519,12 +519,19 @@ async def get_model_info() -> ModelInfoResponse:
                 }
             )
         
+        # 確保指標包含所有必要欄位
+        metrics_data = model_info.get('metrics', {})
+        required_metrics = ['precision_at_5', 'recall_at_5', 'ndcg_at_5', 'accuracy', 'precision', 'recall', 'f1_score']
+        for metric in required_metrics:
+            if metric not in metrics_data:
+                metrics_data[metric] = 0.0
+        
         # 建立回應
         response = ModelInfoResponse(
             model_version=model_info.get('model_version', settings.MODEL_VERSION),
             model_type=model_info.get('model_type', settings.MODEL_TYPE),
             trained_at=datetime.fromisoformat(model_info['trained_at']) if 'trained_at' in model_info else datetime.now(),
-            metrics=model_info.get('metrics', {}),
+            metrics=metrics_data,
             total_products=model_info.get('total_products', 0),
             total_members=model_info.get('total_members', 0),
             description=model_info.get('description')
@@ -550,7 +557,7 @@ async def get_model_info() -> ModelInfoResponse:
         
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_response.model_dump()
+            detail=error_response.model_dump(mode='json')
         )
 
 

@@ -103,7 +103,7 @@ async def validation_exception_handler(
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -129,7 +129,7 @@ async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse
     
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -158,7 +158,7 @@ async def model_not_found_handler(
     
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -187,7 +187,7 @@ async def model_load_error_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -216,7 +216,7 @@ async def feature_extraction_error_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -245,7 +245,7 @@ async def prediction_error_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -274,7 +274,7 @@ async def data_validation_error_handler(
     
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -303,7 +303,7 @@ async def data_processing_error_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -332,7 +332,7 @@ async def file_not_found_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -365,7 +365,7 @@ async def general_exception_handler(
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 
@@ -439,7 +439,7 @@ def create_error_response(
     
     return JSONResponse(
         status_code=status_code,
-        content=error_response.model_dump()
+        content=error_response.model_dump(mode='json')
     )
 
 

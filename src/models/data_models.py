@@ -279,7 +279,7 @@ class ErrorResponse(BaseModel):
     
     error: str = Field(..., description="錯誤類型")
     message: str = Field(..., description="錯誤訊息")
-    detail: Optional[str] = Field(None, description="詳細資訊")
+    detail: Optional[Any] = Field(None, description="詳細資訊")
     timestamp: datetime = Field(default_factory=datetime.now, description="時間戳記")
     request_id: Optional[str] = Field(None, description="請求ID")
 

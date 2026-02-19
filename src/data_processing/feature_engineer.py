@@ -90,12 +90,20 @@ class FeatureEngineer:
         rfm_df = pd.DataFrame(rfm_features)
         
         # 需求 3.1: 計算 RFM 分數（1-5 分）
+        # 使用 rank(pct=True) + cut 來避免 qcut 在數據傾斜時產生 "Bin labels must be one fewer" 錯誤
+        
         # Recency: 越小越好（最近購買）
-        rfm_df['recency_score'] = pd.qcut(rfm_df['recency'], q=5, labels=[5, 4, 3, 2, 1], duplicates='drop')
+        # rank(pct=True) 產生 0-1 的百分比排名，method='average' 處理相同值
+        recency_rank = rfm_df['recency'].rank(method='average', pct=True)
+        rfm_df['recency_score'] = pd.cut(recency_rank, bins=[0, 0.2, 0.4, 0.6, 0.8, 1.0], labels=[5, 4, 3, 2, 1], include_lowest=True)
+        
         # Frequency: 越大越好（購買頻率高）
-        rfm_df['frequency_score'] = pd.qcut(rfm_df['frequency'], q=5, labels=[1, 2, 3, 4, 5], duplicates='drop')
+        frequency_rank = rfm_df['frequency'].rank(method='average', pct=True)
+        rfm_df['frequency_score'] = pd.cut(frequency_rank, bins=[0, 0.2, 0.4, 0.6, 0.8, 1.0], labels=[1, 2, 3, 4, 5], include_lowest=True)
+        
         # Monetary: 越大越好（消費金額高）
-        rfm_df['monetary_score'] = pd.qcut(rfm_df['monetary'], q=5, labels=[1, 2, 3, 4, 5], duplicates='drop')
+        monetary_rank = rfm_df['monetary'].rank(method='average', pct=True)
+        rfm_df['monetary_score'] = pd.cut(monetary_rank, bins=[0, 0.2, 0.4, 0.6, 0.8, 1.0], labels=[1, 2, 3, 4, 5], include_lowest=True)
         
         # 轉換為數值類型
         rfm_df['recency_score'] = pd.to_numeric(rfm_df['recency_score'], errors='coerce').fillna(3)

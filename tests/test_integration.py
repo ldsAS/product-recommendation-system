@@ -23,7 +23,7 @@ class TestIntegration:
         """載入範例資料"""
         try:
             loader = DataLoader()
-            df = loader.merge_data(max_rows=100)
+            df = loader.merge_data(max_rows=10000)
             return df
         except Exception as e:
             pytest.skip(f"無法載入資料: {e}")
